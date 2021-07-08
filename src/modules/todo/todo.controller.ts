@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common'
-import { CreateTodoDto, UpdateTodoDto } from './entities/todo.dto'
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put } from '@nestjs/common'
+import { CreateTodoDto } from './entities/todo.dto'
 import { Todo } from './entities/todo.entity'
 import { TodoService } from './todo.service'
 
@@ -33,11 +33,18 @@ export class TodoController {
 
   @Post()
   createTodo(@Body() todo: CreateTodoDto): Promise<Todo> {
+    if (!todo.title) {
+      throw new BadRequestException('Title field is required!')
+    }
     return this.todoService.createTodo(todo)
   }
 
   @Delete(':id')
-  deleteTodo(@Param('id') id: string): Promise<Todo[]> {
+  async deleteTodo(@Param('id') id: string): Promise<Todo[]> {
+    const updatedTodo = await this.todoService.findOne(id)
+    if (!updatedTodo) {
+      throw new NotFoundException(`Todo with id=${id} not found`)
+    }
     return this.todoService.remove(id)
   }
 }
